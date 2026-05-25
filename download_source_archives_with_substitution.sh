@@ -73,8 +73,13 @@ find . -type f -name Makefile | while read -r makefile; do
     if [[ -n "$pkg_source_url" && -n "$pkg_source" ]]; then
         url="${pkg_source_url}/${pkg_source}"
 
-        echo "Downloading: $url"
+        # Download only GitLab URLs
+        if [[ "$url" == *gitlab* ]]; then
+            echo "Downloading: $url"
 
-        curl -L -o "$pkg_source" "$url"
+            curl -L -o "$pkg_source" "$url"
+        else
+            echo "Skipping non-GitLab URL: $url"
+        fi
     fi
 done
