@@ -3,13 +3,11 @@
 find . -type f -name Makefile | while read -r makefile; do
     declare -A vars
 
-    # Read all variable assignments from the Makefile
     while IFS= read -r line; do
         if [[ "$line" =~ ^([A-Z0-9_]+):=(.*)$ ]]; then
             key="${BASH_REMATCH[1]}"
             value="${BASH_REMATCH[2]}"
 
-            # Trim whitespace
             value="$(echo "$value" | sed 's/^ *//;s/ *$//')"
 
             vars["$key"]="$value"
@@ -19,7 +17,6 @@ find . -type f -name Makefile | while read -r makefile; do
     pkg_source_url="${vars[PKG_SOURCE_URL]}"
     pkg_source="${vars[PKG_SOURCE]}"
 
-    # Variables allowed for substitution
     allowed_vars=(
         PKG_NAME
         PKG_VERSION
@@ -31,15 +28,40 @@ find . -type f -name Makefile | while read -r makefile; do
         PKG_MINOR
     )
 
-    # Resolve $(VAR) references
     resolve_vars() {
         local value="$1"
 
-        for var in "${allowed_vars[@]}"; do
-            replacement="${vars[$var]}"
+        # Resolve $(VAR) and ${VAR}
+        local changed=1
 
-            value="${value//\$\($var\)/$replacement}"
-            value="${value//\$\{$var\}/$replacement}"
+        while [[ $changed -eq 1 ]]; do
+            changed=0
+
+            for var in "${allowed_vars[@]}"; do
+                replacement="${vars[$var]}"
+
+                new_value="${value//\$\($var\)/$replacement}"
+                new_value="${new_value//\$\{$var\}/$replacement}"
+
+                if [[ "$new_value" != "$value" ]]; then
+                    changed=1
+                    value="$new_value"
+                fi
+            done
+        done
+
+        # Resolve $(subst FROM,TO,TEXT)
+        local subst_regex='\$\(subst[[:space:]]+([^,]+),([^,]+),([^)]+)\)'
+
+        while [[ "$value" =~ $subst_regex ]]; do
+            full="${BASH_REMATCH[0]}"
+            from="${BASH_REMATCH[1]}"
+            to="${BASH_REMATCH[2]}"
+            text="${BASH_REMATCH[3]}"
+
+            replaced="${text//${from}/${to}}"
+
+            value="${value//$full/$replaced}"
         done
 
         echo "$value"
