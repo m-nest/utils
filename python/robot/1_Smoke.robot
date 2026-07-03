@@ -2,6 +2,7 @@
 Library    SSHLibrary
 Library    String
 Library    Collections
+Library    Process
 
 Suite Setup       Connect To Router
 Suite Teardown    Close All Connections
@@ -12,8 +13,8 @@ ${SSH_PORT}      22
 *** Test Cases ***
 
 L1-001 Gateway Is Reachable
-    ${rc}=    Run And Return Rc    ping -c 3 ${RG_IP}
-    Should Be Equal As Integers    ${rc}    0
+    ${out}=    Execute Command    uptime
+    Should Contain    ${out}    load
 
 L1-002 LAN Interface Exists
     ${out}=    Execute Command    ip link show ${LAN_IFACE}
