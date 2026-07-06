@@ -1,0 +1,4 @@
+The Robot host is connected to the LAN,
+SSH to the gateway works (from Level 1),
+usp-cli is available,
+standard Linux utilities (ip, ping, nslookup, udhcpc, etc.) are available on the gateway.
